@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PressureMattress ICU Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="logo">PM</span>
+      <h1>PressureMattress ICU</h1>
+    </div>
+    <span id="conn-status" class="badge badge-unknown">connecting&hellip;</span>
+  </header>
+
+  <main>
+    <section class="cards">
+      <div class="card">
+        <div class="card-label">Patients Monitored</div>
+        <div id="patient-count" class="card-value">&ndash;</div>
+      </div>
+      <div class="card">
+        <div class="card-label">High Risk (&ge; 70)</div>
+        <div id="high-risk-count" class="card-value">&ndash;</div>
+      </div>
+      <div class="card">
+        <div class="card-label">API Status</div>
+        <div id="api-status" class="card-value">&ndash;</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Patient Risk Overview</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>MRN</th>
+            <th>Name</th>
+            <th>Bed</th>
+            <th>Risk Score</th>
+          </tr>
+        </thead>
+        <tbody id="patient-rows">
+          <tr><td colspan="4">Loading&hellip;</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>PressureMattress ICU &middot; on-prem deployment</footer>
+  <script src="app.js"></script>
+</body>
+</html>

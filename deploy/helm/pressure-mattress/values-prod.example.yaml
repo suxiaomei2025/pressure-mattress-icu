@@ -1,0 +1,50 @@
+# Example production values for an on-prem hospital install.
+# Copy to values-prod.yaml and fill in before deploying. Do not commit secrets.
+
+images:
+  api:
+    tag: "1.0.0"
+  dashboard:
+    tag: "1.0.0"
+
+postgres:
+  # Set the real password at deploy time, e.g.:
+  #   --set postgres.password="$(openssl rand -base64 32)"
+  password: "REPLACE_WITH_STRONG_PASSWORD"
+  storage:
+    size: 100Gi
+    storageClassName: ""   # set to your hospital's StorageClass (e.g. "nfs", "longhorn")
+
+api:
+  replicas: 2
+  logLevel: info
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+dashboard:
+  replicas: 2
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  hosts:
+    - host: mattress.hospital.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - mattress.hospital.example.com
+      secretName: mattress-tls
+
+backup:
+  enabled: true
+  schedule: "0 2 * * *"
+  retentionDays: 30
+  storage:
+    size: 100Gi

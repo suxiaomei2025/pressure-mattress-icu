@@ -1,0 +1,26 @@
+Thanks for installing PressureMattress ICU!
+
+The stack has been deployed to namespace {{ .Release.Namespace }}.
+
+Services:
+  - api        (ClusterIP, port 8080)
+  - db         (ClusterIP, port 5432)
+  - dashboard  (ClusterIP, port 80)
+
+{{- if .Values.ingress.enabled }}
+Your dashboard is reachable via ingress at:
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else }}
+To access the dashboard locally:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/dashboard 8081:80
+Then open http://localhost:8081
+{{- end }}
+
+{{- if not .Values.postgres.password }}
+WARNING: postgres.password is empty. Set it before use:
+  helm upgrade --install {{ .Release.Name }} . --set postgres.password="<strong-password>"
+{{- end }}
+
+Backups are {{ if not .Values.backup.enabled }}DISABLED{{ else }}enabled (schedule: {{ .Values.backup.schedule }}){{ end }}.
