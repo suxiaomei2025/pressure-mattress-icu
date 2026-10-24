@@ -6,8 +6,8 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 # Install dependencies first for better layer caching
-COPY package.json ./
-RUN npm install --omit=dev
+COPY package*.json ./
+RUN npm ci --omit=dev
 
 # Copy application source
 COPY server.js ./
