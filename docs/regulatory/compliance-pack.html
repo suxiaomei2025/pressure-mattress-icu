@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compliance Documentation Pack — FDA SaMD Pre-Submission Prep</title>
+<style>
+  :root { --ink:#16202b; --muted:#5b6b7c; --accent:#0b6bcb; --line:#e3e8ee; --bg:#f6f8fa; --card:#ffffff; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color:var(--ink); background:var(--bg); line-height:1.55; }
+  .wrap { max-width: 980px; margin:0 auto; padding: 40px 24px 72px; }
+  header { border-bottom: 3px solid var(--accent); padding-bottom: 20px; margin-bottom: 28px; }
+  .kicker { text-transform:uppercase; letter-spacing:.12em; font-size:12px; color:var(--accent); font-weight:700; }
+  h1 { font-size:30px; margin:8px 0 6px; line-height:1.2; }
+  .sub { color:var(--muted); font-size:15px; }
+  .badges { margin:16px 0 4px; }
+  .badge { display:inline-block; background:#eef3f9; color:#0b5bb5; border:1px solid #d5e3f2; border-radius:999px; padding:3px 11px; font-size:12px; font-weight:600; margin:2px 4px 2px 0; }
+  .notice { background:#fff7e6; border:1px solid #f0ddb0; border-left:4px solid #e6a700; padding:14px 16px; border-radius:8px; margin:18px 0; font-size:14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin:24px 0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; }
+  .card h3 { margin:0 0 8px; font-size:16px; }
+  .card .n { color:var(--accent); font-weight:800; font-size:13px; }
+  .card p { margin:0 0 10px; color:var(--muted); font-size:14px; }
+  .card a { color:var(--accent); font-weight:600; text-decoration:none; }
+  .card a:hover { text-decoration:underline; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; font-size:14px; }
+  th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { background:#eef3f9; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:#33404d; }
+  tr:last-child td { border-bottom:none; }
+  h2 { font-size:20px; margin:32px 0 12px; }
+  code { background:#eef1f4; padding:1px 6px; border-radius:5px; font-size:13px; }
+  footer { margin-top:40px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+  .tag { font-size:11px; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Regulatory Documentation Pack</div>
+    <h1>Compliance Documentation Pack — FDA SaMD Pre-Submission Prep</h1>
+    <div class="sub">PressureMattress 护卧康 ICU Bed — Overseas Edition · Software that informs clinical decisions</div>
+    <div class="badges">
+      <span class="badge">FDA SaMD</span>
+      <span class="badge">ISO 14971</span>
+      <span class="badge">IEC 62304</span>
+      <span class="badge">Q-Sub / Pre-Sub</span>
+      <span class="badge">Draft v0.1</span>
+    </div>
+  </header>
+
+  <div class="notice">
+    <strong>Draft for review — not a legal or regulatory opinion.</strong> These documents are
+    starting-point templates containing <code>[TODO]</code> placeholders. They must be completed
+    by the regulatory and quality teams and reviewed by a qualified regulatory consultant before
+    any FDA submission. FDA classification, product codes, and pathway must be formally confirmed.
+  </div>
+
+  <h2>Documents</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="n">01</div>
+      <h3>Intended Use &amp; Indications for Use</h3>
+      <p>Intended-use and indications statements, patient population, users, SaMD risk categorization (IMDRF N12), and preliminary FDA pathway.</p>
+      <a href="01-intended-use-indications-for-use.md">View document →</a>
+    </div>
+    <div class="card">
+      <div class="n">02</div>
+      <h3>Risk Management File (ISO 14971)</h3>
+      <p>Acceptability criteria, hazard identification table, risk estimation/evaluation, control measures, benefit–risk analysis.</p>
+      <a href="02-risk-management-iso-14971.md">View document →</a>
+    </div>
+    <div class="card">
+      <div class="n">03</div>
+      <h3>Software Lifecycle (IEC 62304)</h3>
+      <p>Software safety classification, process/artifact mapping, SDP/SRS outlines, architecture, V&amp;V strategy, SOUP list.</p>
+      <a href="03-software-lifecycle-iec-62304.md">View document →</a>
+    </div>
+    <div class="card">
+      <div class="n">04</div>
+      <h3>Q-Sub (Pre-Submission) Meeting Prep</h3>
+      <p>Regulatory strategy summary, meeting request package, proposed FDA questions, checklist, timeline, risks.</p>
+      <a href="04-qsub-pre-submission-meeting-prep.md">View document →</a>
+    </div>
+  </div>
+
+  <h2>Applicable Regulations &amp; Standards</h2>
+  <table>
+    <tr><th>Framework</th><th>Reference</th></tr>
+    <tr><td>Quality System Regulation</td><td>21 CFR Part 820</td></tr>
+    <tr><td>Labeling / UDI</td><td>21 CFR Parts 801, 830</td></tr>
+    <tr><td>Electronic records / signatures</td><td>21 CFR Part 11</td></tr>
+    <tr><td>Device software functions</td><td>FDA "Policy for Device Software Functions and Mobile Medical Applications" (2022)</td></tr>
+    <tr><td>Premarket software submissions</td><td>FDA "Content of Premarket Submissions for Device Software Functions" (2023)</td></tr>
+    <tr><td>Meetings / feedback</td><td>FDA Q-Submission Program</td></tr>
+    <tr><td>SaMD risk categorization</td><td>IMDRF N12</td></tr>
+    <tr><td>Risk management</td><td>ISO 14971:2019</td></tr>
+    <tr><td>Software lifecycle</td><td>IEC 62304:2006 + A1:2015</td></tr>
+    <tr><td>Usability engineering</td><td>IEC 62366-1</td></tr>
+    <tr><td>QMS</td><td>ISO 13485:2016</td></tr>
+    <tr><td>Privacy/security</td><td>HIPAA, GDPR; FDA Cybersecurity guidance</td></tr>
+  </table>
+
+  <h2>Recommended Next Steps</h2>
+  <ol>
+    <li>Confirm FDA device classification and product code with a regulatory consultant.</li>
+    <li>Complete all <code>[TODO]</code> placeholders with verified product/clinical data.</li>
+    <li>Populate the risk management file with a full design FMEA and clinical evidence.</li>
+    <li>Map IEC 62304 artifacts to the actual SDLC in the repository.</li>
+    <li>Draft and file the Q-Sub (Pre-Sub) request once classification is confirmed.</li>
+  </ol>
+
+  <footer>
+    Task ID: <code>ecd24044-0558-4596-b8f6-c87dae8b2927</code> · Generated 2026-10-24 ·
+    <span class="tag">Draft regulatory documentation — subject to professional review</span>
+  </footer>
+</div>
+</body>
+</html>
