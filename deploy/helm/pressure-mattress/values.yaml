@@ -1,0 +1,112 @@
+# =============================================================================
+# PressureMattress ICU - Helm chart default values
+# Override per hospital install via a values file or --set. Never commit secrets.
+# =============================================================================
+
+# Resource naming overrides (leave empty for defaults).
+nameOverride: ""
+fullnameOverride: ""
+
+# Container images. Build and push them with .github/workflows/build-images.yml.
+# The dashboard nginx proxies /api and /health to the "api" Service (same name
+# as the docker-compose service), so the two deployment paths stay consistent.
+images:
+  api:
+    repository: ghcr.io/suxiaomei2025/pressure-mattress-api
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  dashboard:
+    repository: ghcr.io/suxiaomei2025/pressure-mattress-dashboard
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  postgres:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+
+# Pull secrets for private registries (e.g. GHCR).
+imagePullSecrets: []
+
+# ---------------------------------------------------------------------------
+# PostgreSQL
+# ---------------------------------------------------------------------------
+postgres:
+  user: pressure_mattress
+  database: pressure_mattress
+  # REQUIRED. Provide via --set postgres.password=... or a values file.
+  password: ""
+  storage:
+    size: 20Gi
+    storageClassName: ""   # empty uses the cluster default StorageClass
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# ---------------------------------------------------------------------------
+# API service
+# ---------------------------------------------------------------------------
+api:
+  replicas: 1
+  port: 8080
+  logLevel: info
+  env: {}      # extra environment variables merged into the API pod
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# ---------------------------------------------------------------------------
+# Dashboard (nginx static UI + /api proxy)
+# ---------------------------------------------------------------------------
+dashboard:
+  replicas: 1
+  port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# ---------------------------------------------------------------------------
+# Ingress
+# ---------------------------------------------------------------------------
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: mattress.example-hospital.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# ---------------------------------------------------------------------------
+# Scheduled backups (CronJob running pg_dump to a PVC)
+# ---------------------------------------------------------------------------
+backup:
+  enabled: false
+  schedule: "0 2 * * *"    # daily at 02:00
+  retentionDays: 30
+  storage:
+    size: 10Gi
+    storageClassName: ""
+
+# Pod placement
+nodeSelector: {}
+tolerations: []
+affinity: {}

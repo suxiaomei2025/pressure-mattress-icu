@@ -1,0 +1,9 @@
+# Normalize line endings across platforms; keep shell scripts, Dockerfiles,
+# SQL and YAML as LF so they behave correctly on Linux hosts/containers.
+* text=auto
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.sql text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.tpl text eol=lf

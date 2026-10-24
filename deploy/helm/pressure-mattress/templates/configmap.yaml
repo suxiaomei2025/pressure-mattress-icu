@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pm-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "pressure-mattress.labels" . | nindent 4 }}
+data:
+  POSTGRES_DB: {{ .Values.postgres.database | quote }}
+  POSTGRES_USER: {{ .Values.postgres.user | quote }}
+  API_PORT: "8080"
+  API_LOG_LEVEL: {{ .Values.api.logLevel | quote }}

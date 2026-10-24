@@ -1,0 +1,64 @@
+# PressureMattress ICU - local development stack (Docker Compose)
+#
+# Bring up the full stack with:
+#   docker compose up -d --build
+#
+# Configuration is read from a .env file (see .env.example) or the host
+# environment. The dashboard (nginx) serves the static UI and proxies /api and
+# /health to the API container, so there is a single entry point.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pm-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pressure_mattress}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-strong-password}
+      POSTGRES_DB: ${POSTGRES_DB:-pressure_mattress}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pressure_mattress} -d ${POSTGRES_DB:-pressure_mattress}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  api:
+    build:
+      context: ./api
+    container_name: pm-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 8080
+      LOG_LEVEL: ${API_LOG_LEVEL:-info}
+      DATABASE_URL: postgres://${POSTGRES_USER:-pressure_mattress}:${POSTGRES_PASSWORD:-change-me-strong-password}@db:5432/${POSTGRES_DB:-pressure_mattress}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/health',function(r){process.exit(r.statusCode===200?0:1)})"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  dashboard:
+    build:
+      context: ./dashboard
+    container_name: pm-dashboard
+    restart: unless-stopped
+    ports:
+      - "${DASHBOARD_PORT:-8081}:80"
+    depends_on:
+      - api
+
+volumes:
+  db-data:

@@ -1,0 +1,15 @@
+apiVersion: v2
+name: pressure-mattress
+description: PressureMattress ICU on-prem stack (API, PostgreSQL, dashboard)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+kubeVersion: ">=1.24.0-0"
+keywords:
+  - icu
+  - pressure-mattress
+  - on-prem
+  - healthcare
+  - kubernetes
+maintainers:
+  - name: PressureMattress
