@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PressureMattress · Family Transparency Portal</title>
+<style>
+  :root {
+    --teal-900: #0b3a42;
+    --teal-700: #0e5c66;
+    --teal-600: #147a86;
+    --teal-100: #d8eef0;
+    --teal-50:  #edf7f8;
+    --ink: #1b2a33;
+    --muted: #5b6b73;
+    --line: #dbe4e8;
+    --bg: #f4f7f8;
+    --card: #ffffff;
+    --green: #1e8e5a;
+    --green-bg: #e4f5ec;
+    --amber: #b7791f;
+    --amber-bg: #fdf3e0;
+    --red: #c0392b;
+    --red-bg: #fdecea;
+    --warm: #d98a2b;
+    --shadow: 0 1px 2px rgba(16, 42, 51, .06), 0 4px 16px rgba(16, 42, 51, .06);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+    font-size: 15px;
+  }
+  a { color: var(--teal-600); }
+
+  /* Header */
+  .topbar {
+    background: var(--teal-900);
+    color: #fff;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand .logo {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, #2bb3c0, #147a86);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 18px; color: #fff;
+  }
+  .brand .name { font-size: 16px; font-weight: 700; letter-spacing: .2px; }
+  .brand .sub { font-size: 12px; color: #a9d2d6; }
+  .topbar .meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .pill {
+    font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 999px;
+    background: rgba(255,255,255,.12); color: #eaf4f5; border: 1px solid rgba(255,255,255,.18);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: #57d18c; }
+
+  /* Layout */
+  .shell { display: grid; grid-template-columns: 232px 1fr; min-height: calc(100vh - 66px); }
+  .sidenav { background: var(--card); border-right: 1px solid var(--line); padding: 18px 12px; }
+  .sidenav .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 8px 12px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    padding: 10px 12px; margin: 2px 0; border: none; background: none; border-radius: 10px;
+    font-size: 14px; color: var(--ink); cursor: pointer; font-weight: 500;
+  }
+  .nav-item:hover { background: var(--teal-50); }
+  .nav-item.active { background: var(--teal-100); color: var(--teal-900); font-weight: 700; }
+  .nav-item .ico { width: 18px; text-align: center; opacity: .75; }
+  .nav-item[data-role-gated] { display: none; }
+
+  .main { padding: 26px 32px; max-width: 1080px; }
+  .main h1 { font-size: 22px; margin: 0 0 4px; }
+  .main .lead { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+
+  /* Cards */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px 22px; margin-bottom: 18px; }
+  .card h2 { margin: 0 0 6px; font-size: 16px; }
+  .card .hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+
+  .grid { display: grid; gap: 16px; }
+  .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 900px) { .grid.cols-3, .grid.cols-2 { grid-template-columns: 1fr; } .shell { grid-template-columns: 1fr; } .sidenav { display: none; } }
+
+  .stat { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--card); }
+  .stat .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .stat .v { font-size: 24px; font-weight: 700; margin-top: 4px; }
+  .stat .s { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+  .badge.low, .badge.normal, .badge.ok { background: var(--green-bg); color: var(--green); }
+  .badge.moderate, .badge.attention { background: var(--amber-bg); color: var(--amber); }
+  .badge.high, .badge.alert { background: var(--red-bg); color: var(--red); }
+
+  .banner { border-radius: 12px; padding: 14px 16px; font-size: 14px; display: flex; gap: 10px; align-items: flex-start; }
+  .banner.info { background: var(--teal-50); border: 1px solid #bfe0e4; }
+  .banner.warn { background: var(--amber-bg); border: 1px solid #f0dcb4; }
+  .banner .tag { font-weight: 700; white-space: nowrap; }
+
+  /* Timeline */
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .timeline li { display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .timeline li:last-child { border-bottom: none; }
+  .timeline .when { min-width: 74px; font-weight: 700; color: var(--teal-700); }
+  .timeline .pos { font-weight: 600; }
+  .timeline .by { color: var(--muted); font-size: 13px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  code { background: var(--teal-50); padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+
+  .rolebar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .rolebar button { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--ink); }
+  .rolebar button.active { background: var(--teal-700); color: #fff; border-color: var(--teal-700); }
+
+  .footer-note { color: var(--muted); font-size: 12.5px; margin-top: 26px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .mono { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12px; }
+  .muted { color: var(--muted); }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .tab { display: none; }
+  .tab.active { display: block; }
+  .row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .kv { font-size: 14px; }
+  .kv .k { color: var(--muted); font-size: 12.5px; }
+  .kv .v { font-weight: 600; }
+  .dotline { display: flex; align-items: center; gap: 8px; }
+  .dotline .bar { flex: 1; height: 8px; border-radius: 6px; background: #e7edef; overflow: hidden; }
+  .dotline .bar > span { display: block; height: 100%; border-radius: 6px; background: var(--teal-600); }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">护</div>
+    <div>
+      <div class="name">PressureMattress · Family Transparency Portal</div>
+      <div class="sub">护卧康 ICU 床垫 · Read-only family view</div>
+    </div>
+  </div>
+  <div class="meta">
+    <span class="pill"><span class="dot"></span> Live device data</span>
+    <span class="pill">Read-only</span>
+    <span class="pill" id="asOf">As of —</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="sidenav" aria-label="Portal sections">
+    <div class="section-label">Family view</div>
+    <button class="nav-item active" data-tab="overview"><span class="ico">🏠</span> Overview</button>
+    <button class="nav-item" data-tab="schedule"><span class="ico">↻</span> Repositioning schedule</button>
+    <button class="nav-item" data-tab="mattress"><span class="ico">🛏️</span> Mattress performance</button>
+    <button class="nav-item" data-tab="consent"><span class="ico">🔒</span> Access &amp; consent</button>
+
+    <div class="section-label" style="margin-top:14px;">Clinical / admin</div>
+    <button class="nav-item" data-tab="risk" data-role-gated="clinician,admin"><span class="ico">🩺</span> Risk status (clinical)</button>
+    <button class="nav-item" data-tab="audit" data-role-gated="admin"><span class="ico">📋</span> Audit log</button>
+  </nav>
+
+  <main class="main" id="main">
+    <!-- Role demo switch -->
+    <div class="rolebar" role="group" aria-label="Role (RBAC demo)">
+      <button class="role-btn active" data-role="family">Family member (read-only)</button>
+      <button class="role-btn" data-role="clinician">Clinician</button>
+      <button class="role-btn" data-role="admin">Administrator</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <section class="tab active" id="tab-overview">
+      <h1>Welcome, Li family</h1>
+      <p class="lead">A plain-language summary of your loved one's pressure care — no medical jargon.</p>
+
+      <div class="banner info">
+        <span class="tag">Consent active</span>
+        <span>The care team has been authorized to share this simplified view with you. You can withdraw consent at any time from the <strong>Access &amp; consent</strong> tab.</span>
+      </div>
+
+      <div class="grid cols-3" style="margin-top:16px;">
+        <div class="stat">
+          <div class="k">Pressure care status</div>
+          <div class="v"><span class="badge low">On track</span></div>
+          <div class="s">Your loved one is being repositioned regularly as planned.</div>
+        </div>
+        <div class="stat">
+          <div class="k">Next repositioning</div>
+          <div class="v" id="ov-next">—</div>
+          <div class="s" id="ov-last">—</div>
+        </div>
+        <div class="stat">
+          <div class="k">Mattress</div>
+          <div class="v"><span class="badge ok">Working normally</span></div>
+          <div class="s">All sensors online · alternating pressure active.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <h2>How to read this portal</h2>
+        <p class="hint">These updates are intentionally simplified and are <strong>not medical advice</strong>.</p>
+        <ul style="margin:0; padding-left:20px; color:#33454e;">
+          <li><strong>Repositioning schedule</strong> — when your loved one is turned to relieve pressure on the skin.</li>
+          <li><strong>Mattress performance</strong> — whether the mattress is working correctly and helping redistribute pressure.</li>
+          <li><strong>Risk status</strong> — a simplified traffic-light view (visible to the care team) of skin-breakdown risk.</li>
+        </ul>
+        <p style="margin:10px 0 0;" class="muted">For any clinical question, please speak directly with the nursing team. This portal does not replace medical guidance.</p>
+      </div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section class="tab" id="tab-schedule">
+      <h1>Repositioning schedule</h1>
+      <p class="lead">When your loved one is turned to relieve pressure and protect their skin.</p>
+
+      <div class="grid cols-3">
+        <div class="stat"><div class="k">Turn frequency</div><div class="v">Every 2 h</div><div class="s">Set by the care team</div></div>
+        <div class="stat"><div class="k">Next turn</div><div class="v" id="sched-next">—</div><div class="s" id="sched-next-pos">—</div></div>
+        <div class="stat"><div class="k">Adherence (last 24 h)</div><div class="v" id="sched-adh">—</div><div class="s">Turns completed on time</div></div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>Recent turns</h2>
+        <p class="hint">Most recent first.</p>
+        <ul class="timeline" id="sched-list"></ul>
+      </div>
+    </section>
+
+    <!-- MATTRESS -->
+    <section class="tab" id="tab-mattress">
+      <h1>Mattress performance</h1>
+      <p class="lead">A simplified health check of the mattress supporting your loved one.</p>
+
+      <div class="grid cols-3">
+        <div class="stat"><div class="k">Device status</div><div class="v"><span class="badge ok">Online</span></div><div class="s">Connected and reporting</div></div>
+        <div class="stat"><div class="k">Therapy mode</div><div class="v">Alternating</div><div class="s">Pressure is redistributed automatically</div></div>
+        <div class="stat"><div class="k">Air cell integrity</div><div class="v"><span class="badge ok">OK</span></div><div class="s">All zones holding pressure</div></div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>Details</h2>
+        <div class="grid cols-2">
+          <div class="kv"><div class="k">Firmware</div><div class="v">v2.4.1</div></div>
+          <div class="kv"><div class="k">Last maintenance check</div><div class="v">2026-10-20</div></div>
+          <div class="kv"><div class="k">Battery backup</div><div class="v">Charged</div></div>
+          <div class="kv"><div class="k">Alarm status</div><div class="v"><span class="badge ok">None</span></div></div>
+        </div>
+        <p style="margin:12px 0 0;" class="muted">If a mattress issue needs attention, the care team is alerted automatically — family members are not expected to act on this data.</p>
+      </div>
+    </section>
+
+    <!-- RISK (clinical) -->
+    <section class="tab" id="tab-risk">
+      <h1>Risk status <span class="badge low" style="margin-left:6px;">Clinical view</span></h1>
+      <p class="lead">This view is restricted to the care team and uses clinical language.</p>
+
+      <div class="grid cols-3">
+        <div class="stat"><div class="k">Pressure-injury risk</div><div class="v"><span class="badge low">Low</span></div><div class="s">Braden score 19</div></div>
+        <div class="stat"><div class="k">Mobility</div><div class="v">Limited</div><div class="s">Repositioned on schedule</div></div>
+        <div class="stat"><div class="k">Skin integrity</div><div class="v"><span class="badge low">Intact</span></div><div class="s">No breakdown observed</div></div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>Plain-language mirror (shown to family)</h2>
+        <p class="hint">The family portal intentionally translates this into a traffic-light status without raw scores.</p>
+        <table>
+          <tr><th>Clinical metric</th><th>Family sees</th></tr>
+          <tr><td>Braden score 19 / low risk</td><td>"Low risk — care is on track"</td></tr>
+          <tr><td>Repositioning adherence 95%</td><td>"Being turned regularly as planned"</td></tr>
+          <tr><td>All sensor zones nominal</td><td>"Mattress working normally"</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- CONSENT -->
+    <section class="tab" id="tab-consent">
+      <h1>Access &amp; consent</h1>
+      <p class="lead">You control who can see this portal and what is shared.</p>
+
+      <div class="card">
+        <h2>Consent record</h2>
+        <div class="grid cols-2">
+          <div class="kv"><div class="k">Status</div><div class="v"><span class="badge low">Active — opted in</span></div></div>
+          <div class="kv"><div class="k">Authorized by</div><div class="v">Patient via power of attorney</div></div>
+          <div class="kv"><div class="k">Effective date</div><div class="v">2026-10-24</div></div>
+          <div class="kv"><div class="k">Review due</div><div class="v">2026-11-24</div></div>
+        </div>
+        <div class="banner warn" style="margin-top:14px;">
+          <span class="tag">Withdraw consent</span>
+          <span>If you choose to withdraw, access to this portal is revoked immediately and an audit record is kept. <button class="pill" style="background:#fff;border:1px solid var(--line);cursor:pointer;" onclick="alert('Demo: consent revocation would require identity verification in production.')">Withdraw (demo)</button></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>What is shared vs. not shared</h2>
+        <table>
+          <tr><th>Shared with family</th><th>Not shared (care team only)</th></tr>
+          <tr><td>Repositioning schedule and last turn</td><td>Raw clinical scores (e.g., Braden)</td></tr>
+          <tr><td>Simplified mattress health</td><td>Medication, diagnosis, treatment notes</td></tr>
+          <tr><td>Simplified risk traffic-light</td><td>Full sensor time-series data</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Authorized family members</h2>
+        <table>
+          <tr><th>Name</th><th>Relationship</th><th>Access</th><th>Status</th></tr>
+          <tr><td>Li Wei</td><td>Daughter</td><td>Read-only</td><td><span class="badge low">Active</span></td></tr>
+          <tr><td>Li Ming</td><td>Son</td><td>Read-only</td><td><span class="badge low">Active</span></td></tr>
+          <tr><td>Chen Fang</td><td>Spouse</td><td>Read-only</td><td><span class="badge low">Active</span></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- AUDIT (admin) -->
+    <section class="tab" id="tab-audit">
+      <h1>Audit log <span class="badge low" style="margin-left:6px;">Admin only</span></h1>
+      <p class="lead">Every access and consent event is recorded for accountability (HIPAA/GDPR-aligned).</p>
+      <div class="card">
+        <table id="audit-table">
+          <tr><th>Timestamp</th><th>Actor</th><th>Role</th><th>Action</th><th>Resource</th><th>Result</th></tr>
+        </table>
+      </div>
+    </section>
+
+    <div class="footer-note">
+      <strong>PressureMattress 护卧康 ICU 床垫</strong> — Family Transparency Portal (read-only). This prototype demonstrates consent gating, role-based access (RBAC), simplified non-clinical language, and audit logging. Real RBAC/consent/audit enforcement is server-side (see implementation notes). Not medical advice.
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var ROLE = "family"; // current role
+
+  // ---------- Mock data (server-provided in production) ----------
+  var DATA = {
+    patient: { name: "Ms. Chen", room: "ICU Room 3" },
+    repositioning: {
+      frequencyHours: 2,
+      adherence: "95%",
+      lastTurn: { time: "11:40", position: "Right side", by: "Nurse A." },
+      nextTurn: { time: "13:40", position: "Back" },
+      schedule: [
+        { time: "11:40", position: "Right side", by: "Nurse A.", onTime: true },
+        { time: "09:40", position: "Left side",  by: "Nurse B.", onTime: true },
+        { time: "07:40", position: "Back",       by: "Nurse A.", onTime: true },
+        { time: "05:40", position: "Right side", by: "Nurse C.", onTime: false },
+        { time: "03:40", position: "Left side",  by: "Nurse B.", onTime: true },
+        { time: "01:40", position: "Back",       by: "Nurse C.", onTime: true },
+        { time: "23:40", position: "Right side", by: "Nurse A.", onTime: true },
+        { time: "21:40", position: "Left side",  by: "Nurse B.", onTime: true }
+      ]
+    },
+    audit: [
+      { t: "2026-10-25 12:38", actor: "Li Wei",  role: "family",   action: "view",   resource: "overview", result: "allowed" },
+      { t: "2026-10-25 12:37", actor: "Li Wei",  role: "family",   action: "view",   resource: "schedule", result: "allowed" },
+      { t: "2026-10-25 11:58", actor: "Nurse A", role: "clinician", action: "update", resource: "repositioning", result: "allowed" },
+      { t: "2026-10-25 11:12", actor: "Li Ming", role: "family",   action: "view",   resource: "mattress", result: "allowed" },
+      { t: "2026-10-25 10:05", actor: "Li Ming", role: "family",   action: "view",   resource: "risk", result: "denied" },
+      { t: "2026-10-24 16:20", actor: "Dr. Wu",  role: "clinician", action: "grant",  resource: "consent:family", result: "allowed" },
+      { t: "2026-10-24 16:19", actor: "Dr. Wu",  role: "clinician", action: "opt_in", resource: "patient:consent", result: "allowed" }
+    ]
+  };
+
+  // ---------- Helpers ----------
+  function byId(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  function renderOverview() {
+    byId("ov-next").textContent = "In 45 min";
+    byId("ov-last").textContent = "Last turned " + DATA.repositioning.lastTurn.time + " · " + DATA.repositioning.lastTurn.position;
+  }
+
+  function renderSchedule() {
+    var next = DATA.repositioning.nextTurn;
+    byId("sched-next").textContent = next.time;
+    byId("sched-next-pos").textContent = "Position: " + next.position;
+    byId("sched-adh").textContent = DATA.repositioning.adherence;
+
+    var list = byId("sched-list");
+    list.innerHTML = "";
+    DATA.repositioning.schedule.forEach(function (t) {
+      var li = document.createElement("li");
+      var mark = t.onTime ? '<span class="badge ok" style="margin-left:8px;">on time</span>' : '<span class="badge attention" style="margin-left:8px;">delayed</span>';
+      li.innerHTML = '<span class="when">' + esc(t.time) + '</span>' +
+        '<span><span class="pos">' + esc(t.position) + '</span>' + mark +
+        '<div class="by">Turned by ' + esc(t.by) + '</div></span>';
+      list.appendChild(li);
+    });
+  }
+
+  function renderAudit() {
+    var table = byId("audit-table");
+    // keep header row, clear the rest
+    while (table.rows.length > 1) { table.deleteRow(1); }
+    DATA.audit.forEach(function (r) {
+      var row = table.insertRow(-1);
+      var badge = r.result === "allowed" ? '<span class="badge ok">allowed</span>' : '<span class="badge alert">denied</span>';
+      row.innerHTML = "<td class='mono'>" + esc(r.t) + "</td><td>" + esc(r.actor) + "</td><td>" + esc(r.role) +
+        "</td><td>" + esc(r.action) + "</td><td>" + esc(r.resource) + "</td><td>" + badge + "</td>";
+    });
+  }
+
+  // ---------- RBAC (client-side demo) ----------
+  var ROLE_GATES = {
+    family:    ["overview", "schedule", "mattress", "consent"],
+    clinician: ["overview", "schedule", "mattress", "consent", "risk"],
+    admin:     ["overview", "schedule", "mattress", "consent", "risk", "audit"]
+  };
+
+  function applyRole(role) {
+    ROLE = role;
+    document.querySelectorAll(".role-btn").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-role") === role);
+    });
+    // show/hide gated nav items
+    document.querySelectorAll(".nav-item[data-role-gated]").forEach(function (b) {
+      var roles = b.getAttribute("data-role-gated").split(",");
+      var visible = roles.indexOf(role) >= 0;
+      b.style.display = visible ? "flex" : "none";
+      if (!visible && b.classList.contains("active")) {
+        b.classList.remove("active");
+        showTab("overview");
+      }
+    });
+    // if current tab is not allowed for this role, jump to overview
+    var allowed = ROLE_GATES[role] || [];
+    var active = document.querySelector(".tab.active");
+    if (active && allowed.indexOf(active.id.replace("tab-", "")) < 0) {
+      showTab("overview");
+    }
+  }
+
+  function showTab(name) {
+    document.querySelectorAll(".nav-item").forEach(function (b) {
+      b.classList.toggle("active", b.getAttribute("data-tab") === name);
+    });
+    document.querySelectorAll(".tab").forEach(function (t) {
+      t.classList.toggle("active", t.id === "tab-" + name);
+    });
+  }
+
+  // ---------- Wire events ----------
+  document.querySelectorAll(".role-btn").forEach(function (b) {
+    b.addEventListener("click", function () { applyRole(b.getAttribute("data-role")); });
+  });
+  document.querySelectorAll(".nav-item").forEach(function (b) {
+    b.addEventListener("click", function () { showTab(b.getAttribute("data-tab")); });
+  });
+
+  // ---------- Init ----------
+  function setAsOf() {
+    var now = new Date();
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    byId("asOf").textContent = "As of " + now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) +
+      " " + pad(now.getHours()) + ":" + pad(now.getMinutes());
+  }
+  setAsOf();
+  renderOverview();
+  renderSchedule();
+  renderAudit();
+  applyRole("family");
+})();
+</script>
+</body>
+</html>
