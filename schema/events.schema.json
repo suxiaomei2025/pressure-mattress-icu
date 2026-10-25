@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pressure-mattress.example/schemas/telemetry/events.schema.json",
+  "title": "PressureMattress Telemetry Events",
+  "type": "object",
+  "required": [
+    "eventId",
+    "event",
+    "schemaVersion",
+    "sentAt",
+    "consentTier"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "sentAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "consentTier": {
+      "enum": [
+        "off",
+        "anonymized",
+        "full"
+      ]
+    },
+    "event": {
+      "enum": [
+        "feature_usage",
+        "device_performance",
+        "dashboard_engagement"
+      ]
+    },
+    "app": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "const": "pressure-mattress-icu"
+        },
+        "version": {
+          "type": "string"
+        },
+        "env": {
+          "enum": [
+            "dev",
+            "staging",
+            "prod"
+          ]
+        }
+      }
+    },
+    "user": {
+      "type": "object",
+      "description": "Pseudonymized identifiers only. No raw PII/PHI.",
+      "additionalProperties": false,
+      "properties": {
+        "anonymousId": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "facilityHash": {
+          "type": "string",
+          "maxLength": 64
+        }
+      }
+    },
+    "device": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "mattress",
+            "sensorBridge",
+            "gateway",
+            "dashboard"
+          ]
+        },
+        "modelHash": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "firmwareMajor": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "batteryLevel": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "reconnectCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sensorLatencyMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 300000
+        }
+      }
+    },
+    "feature": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "action": {
+          "enum": [
+            "view",
+            "click",
+            "toggle",
+            "submit",
+            "export"
+          ]
+        },
+        "screen": {
+          "type": "string",
+          "maxLength": 64
+        }
+      }
+    },
+    "engagement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "page": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400000
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "feature"
+      ]
+    },
+    {
+      "required": [
+        "device"
+      ]
+    },
+    {
+      "required": [
+        "engagement"
+      ]
+    }
+  ]
+}

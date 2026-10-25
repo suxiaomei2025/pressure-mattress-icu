@@ -1,0 +1,61 @@
+# Self-hosted PostHog for PressureMattress ICU telemetry.
+# Data stays in your infrastructure (no third-party processor for clinical telemetry).
+#
+#   docker compose --env-file .env.example up -d
+#
+# Reference: https://posthog.com/docs/self-host
+version: '3.9'
+
+services:
+  posthog:
+    image: posthog/posthog:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"   # app
+      - "8001:8001"   # capture (telemetry ingest)
+    environment:
+      POSTHOG_SECRET: ${POSTHOG_SECRET}
+      POSTHOG_DB_HOST: db
+      POSTHOG_DB_NAME: ${POSTHOG_DB_NAME:-posthog}
+      POSTHOG_DB_USER: ${POSTHOG_DB_USER:-posthog}
+      POSTHOG_DB_PASSWORD: ${POSTHOG_DB_PASSWORD}
+      POSTHOG_REDIS_HOST: redis
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_DATABASE: posthog
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    depends_on:
+      - db
+      - redis
+      - clickhouse
+
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTHOG_DB_NAME:-posthog}
+      POSTGRES_USER: ${POSTHOG_DB_USER:-posthog}
+      POSTGRES_PASSWORD: ${POSTHOG_DB_PASSWORD}
+    volumes:
+      - posthog_db:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8
+    restart: unless-stopped
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    volumes:
+      - posthog_clickhouse:/var/lib/clickhouse
+
+volumes:
+  posthog_db:
+  posthog_clickhouse:
