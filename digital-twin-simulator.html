@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PressureMattress ICU · Digital Twin Patient Positioning Simulator</title>
+<style>
+  :root { --bg:#0e1420; --panel:#161e2e; --panel2:#1d2740; --border:#2a3550; --text:#e6ecf7; --muted:#93a1bd; --accent:#3da9fc; --good:#2ecc71; --warn:#f5b93b; --danger:#ff5d5d; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body { font-family:"Segoe UI",-apple-system,"Helvetica Neue",Arial,sans-serif; background:var(--bg); color:var(--text); overflow:hidden; }
+  #app { display:grid; grid-template-columns:340px 1fr; height:100vh; }
+  #panel { background:var(--panel); border-right:1px solid var(--border); overflow-y:auto; padding:14px 14px 30px; }
+  #viewport { position:relative; background:radial-gradient(circle at 50% 30%, #1a2336 0%, #0b101c 70%); }
+  #viewport canvas { display:block; }
+  h1 { font-size:16px; margin:0 0 2px; letter-spacing:.2px; }
+  .subtitle { font-size:11px; color:var(--muted); margin-bottom:14px; line-height:1.4; }
+  .section { margin-bottom:16px; }
+  .section h2 { font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin:0 0 8px; border-bottom:1px solid var(--border); padding-bottom:5px; }
+  label { display:block; font-size:12px; color:var(--muted); margin:8px 0 3px; }
+  select, input[type=range], input[type=text] { width:100%; background:var(--panel2); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:7px 8px; font-size:13px; }
+  input[type=range] { padding:0; height:22px; accent-color:var(--accent); }
+  .row { display:flex; gap:8px; align-items:center; }
+  .row > * { flex:1; }
+  .value-badge { font-size:12px; color:var(--accent); min-width:42px; text-align:right; }
+  button { background:var(--panel2); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-size:13px; cursor:pointer; transition:.15s; }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#06121f; font-weight:600; }
+  button.danger { background:transparent; border-color:var(--danger); color:var(--danger); }
+  .btn-row { display:flex; gap:8px; margin-top:8px; }
+  .btn-row button { flex:1; }
+  .chip-grid { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .chip { font-size:11px; padding:4px 9px; border-radius:20px; cursor:pointer; border:1px solid var(--border); color:var(--muted); user-select:none; }
+  .chip.active { background:var(--accent); color:#06121f; border-color:var(--accent); font-weight:600; }
+  .metric-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .metric { background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:9px 10px; }
+  .metric .k { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+  .metric .v { font-size:19px; font-weight:700; margin-top:2px; }
+  .metric .v small { font-size:11px; font-weight:400; color:var(--muted); }
+  .risk-low { color:var(--good); } .risk-mod { color:var(--warn); } .risk-high { color:var(--danger); }
+  #hotspot-list { list-style:none; margin:8px 0 0; padding:0; }
+  #hotspot-list li { font-size:12px; padding:6px 8px; border-radius:6px; margin-bottom:5px; background:var(--panel2); border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  #hotspot-list .dot { width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:7px; }
+  #protocol-list { list-style:none; margin:6px 0 0; padding:0; font-size:12px; }
+  #protocol-list li { padding:5px 0 5px 22px; position:relative; line-height:1.35; }
+  #protocol-list li::before { content:""; position:absolute; left:2px; top:7px; width:12px; height:12px; border-radius:3px; background:var(--panel2); border:1px solid var(--border); }
+  #protocol-list li.pass::before { background:var(--good); border-color:var(--good); content:"✓"; color:#06210f; font-size:10px; text-align:center; line-height:12px; }
+  #protocol-list li.fail::before { background:var(--danger); border-color:var(--danger); content:"✕"; color:#2b0505; font-size:10px; text-align:center; line-height:12px; }
+  #lms-log { background:#0a0f1a; border:1px solid var(--border); border-radius:6px; font-family:ui-monospace,"Cascadia Code",Consolas,monospace; font-size:10.5px; padding:8px; height:120px; overflow-y:auto; white-space:pre-wrap; color:#b9e3c9; }
+  .hint { font-size:11px; color:var(--muted); line-height:1.5; margin-top:8px; }
+  .legend { display:flex; align-items:center; gap:4px; margin-top:8px; font-size:10px; color:var(--muted); }
+  .legend .bar { height:10px; width:120px; border-radius:3px; background:linear-gradient(to right,#1c3a8a,#2e86de,#2ecc71,#f5b93b,#ff5d5d); }
+  #topbar { position:absolute; top:12px; left:12px; z-index:10; pointer-events:none; }
+  #topbar .badge { background:rgba(13,20,34,.82); border:1px solid var(--border); border-radius:8px; padding:8px 12px; font-size:12px; backdrop-filter:blur(4px); }
+  #fallback { position:absolute; inset:0; display:none; align-items:center; justify-content:center; text-align:center; color:var(--muted); font-size:14px; padding:20px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <aside id="panel">
+    <h1>Digital Twin · Positioning Simulator</h1>
+    <div class="subtitle">PressureMattress ICU — visualize pressure hotspots and validate repositioning before real-world application. Task <code>bb7f9680</code>.</div>
+
+    <div class="section">
+      <h2>Scenario Library</h2>
+      <label>Training scenario</label>
+      <select id="scenario"></select>
+      <div class="chip-grid" id="position-presets"></div>
+      <p class="hint" id="scenario-desc" style="margin-top:6px;"></p>
+    </div>
+
+    <div class="section">
+      <h2>Patient</h2>
+      <div class="row"><div style="flex:1"><label>Weight</label><input type="range" id="weight" min="35" max="180" step="1" value="70"></div><div class="value-badge" id="weight-val" style="align-self:flex-end;padding-bottom:7px;">70 kg</div></div>
+      <label>Mobility / tissue risk</label>
+      <select id="mobility">
+        <option value="independent">Fully mobile (independent)</option>
+        <option value="assisted" selected>Assisted — limited mobility</option>
+        <option value="immobile">Immobile / sedated</option>
+      </select>
+      <label>Support surface</label>
+      <select id="surface">
+        <option value="standard">Standard foam mattress</option>
+        <option value="airOverlay">Air overlay (retrofit)</option>
+        <option value="alternating">Alternating pressure</option>
+        <option value="lowAirLoss">Low-air-loss (therapeutic)</option>
+        <option value="gel">Gel / viscoelastic</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <h2>Positioning</h2>
+      <div class="row"><div style="flex:1"><label>Turn angle</label><input type="range" id="turn" min="0" max="90" step="1" value="0"></div><div class="value-badge" id="turn-val" style="align-self:flex-end;padding-bottom:7px;">0°</div></div>
+      <div class="row"><div style="flex:1"><label>Head elevation</label><input type="range" id="elevation" min="0" max="70" step="1" value="0"></div><div class="value-badge" id="elevation-val" style="align-self:flex-end;padding-bottom:7px;">0°</div></div>
+      <div class="btn-row"><button id="side-left">Turn Left</button><button id="side-right" class="primary">Turn Right</button></div>
+      <div class="btn-row"><button id="heels-offload">Offload heels</button><button id="reset-pose">Reset</button></div>
+    </div>
+
+    <div class="section">
+      <h2>Live Pressure Readout</h2>
+      <div class="metric-grid">
+        <div class="metric"><div class="k">Peak pressure</div><div class="v" id="peak-val">—</div></div>
+        <div class="metric"><div class="k">Risk score</div><div class="v" id="risk-val">—</div></div>
+        <div class="metric"><div class="k">Area &gt;32 mmHg</div><div class="v" id="area-val">—</div></div>
+        <div class="metric"><div class="k">Next turn in</div><div class="v" id="turn-timer">2h 00m</div></div>
+      </div>
+      <div class="legend"><span class="bar"></span> 5 → 90 mmHg (blue → red)</div>
+      <ul id="hotspot-list"></ul>
+    </div>
+
+    <div class="section">
+      <h2>Protocol Validation</h2>
+      <ul id="protocol-list"></ul>
+    </div>
+
+    <div class="section">
+      <h2>LMS Integration</h2>
+      <button class="primary" id="lms-launch" style="width:100%">Launch SCORM / xAPI session</button>
+      <label style="margin-top:8px;">xAPI LRS endpoint (optional)</label>
+      <input type="text" id="lrs-endpoint" placeholder="https://lrs.example.com/data/xAPI/statements" />
+      <div class="btn-row"><button id="lms-complete">Mark complete</button><button id="lms-score">Report score</button></div>
+      <div id="lms-log">Awaiting LMS session…</div>
+    </div>
+  </aside>
+
+  <div id="viewport">
+    <div id="topbar"><div class="badge" id="pose-badge">Supine · Standard foam · 70 kg</div></div>
+    <div id="fallback">3D renderer unavailable. The simulation logic still runs — see the readout panel.</div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ===== Pressure model (physics-informed surrogate) =====
+ * Interface pressure (mmHg) at a bony prominence ~ baselinePeak * (weight/70)
+ * * surfaceFactor * elevationFactor * offloadFactor. Baselines calibrated to
+ * published interface-pressure literature for a ~70 kg adult on standard foam.
+ * Training/education only — NOT a medical device. ===== */
+
+const MATTRESS = { length: 200, width: 90 };
+const GRID = { nx: 48, nz: 18 };
+const CAPILLARY = 32;
+
+const SURFACE_FACTORS = { standard:1.00, airOverlay:0.78, alternating:0.62, lowAirLoss:0.55, gel:0.82 };
+
+const PROMINENCES = [
+  { id:'occiput',    label:'Occiput',         x:-78, z:0,   base:42, sigma:7,  family:'supine' },
+  { id:'scapulaL',   label:'Scapula (L)',     x:-55, z:-13, base:30, sigma:9,  family:'supine' },
+  { id:'scapulaR',   label:'Scapula (R)',     x:-55, z:13,  base:30, sigma:9,  family:'supine' },
+  { id:'elbowL',     label:'Elbow (L)',       x:-38, z:-26, base:38, sigma:5,  family:'supine' },
+  { id:'elbowR',     label:'Elbow (R)',       x:-38, z:26,  base:38, sigma:5,  family:'supine' },
+  { id:'sacrum',     label:'Sacrum / coccyx', x:-8,  z:0,   base:62, sigma:8,  family:'supine' },
+  { id:'buttockL',   label:'Buttock (L)',     x:-2,  z:-12, base:24, sigma:11, family:'supine' },
+  { id:'buttockR',   label:'Buttock (R)',     x:-2,  z:12,  base:24, sigma:11, family:'supine' },
+  { id:'thighL',     label:'Thigh (L)',       x:22,  z:-10, base:20, sigma:13, family:'supine' },
+  { id:'thighR',     label:'Thigh (R)',       x:22,  z:10,  base:20, sigma:13, family:'supine' },
+  { id:'calfL',      label:'Calf (L)',        x:50,  z:-10, base:15, sigma:10, family:'supine' },
+  { id:'calfR',      label:'Calf (R)',        x:50,  z:10,  base:15, sigma:10, family:'supine' },
+  { id:'heelL',      label:'Heel (L)',        x:72,  z:-9,  base:68, sigma:5,  family:'supine' },
+  { id:'heelR',      label:'Heel (R)',        x:72,  z:9,   base:68, sigma:5,  family:'supine' },
+  { id:'ear',        label:'Ear',             x:-78, z:19,  base:34, sigma:6,  family:'lateral' },
+  { id:'acromion',   label:'Shoulder',        x:-52, z:21,  base:52, sigma:7,  family:'lateral' },
+  { id:'trochanter', label:'Greater trochanter', x:-5, z:19, base:78, sigma:7, family:'lateral' },
+  { id:'kneeLat',    label:'Knee (lateral)',  x:24,  z:15,  base:42, sigma:7,  family:'lateral' },
+  { id:'malleolus',  label:'Malleolus',       x:55,  z:11,  base:46, sigma:5,  family:'lateral' },
+  { id:'forehead',   label:'Forehead',        x:-78, z:0,   base:30, sigma:6,  family:'prone' },
+  { id:'chest',      label:'Chest',           x:-40, z:0,   base:22, sigma:12, family:'prone' },
+  { id:'iliacL',     label:'Iliac crest (L)', x:-10, z:-10, base:55, sigma:7,  family:'prone' },
+  { id:'iliacR',     label:'Iliac crest (R)', x:-10, z:10,  base:55, sigma:7,  family:'prone' },
+  { id:'kneeProne',  label:'Knees',           x:25,  z:0,   base:40, sigma:8,  family:'prone' },
+  { id:'toes',       label:'Toes',            x:76,  z:0,   base:30, sigma:5,  family:'prone' },
+];
+
+const SCENARIOS = [
+  { id:'supine-baseline', name:'Supine — baseline', pose:'supine', weight:70, mobility:'assisted',
+    desc:'Immobile patient lying supine on a standard foam mattress. Expected hotspots: sacrum and heels. Learners should offload heels and schedule a turn.' },
+  { id:'lateral-30', name:'Lateral 30° tilt', pose:'lateral30', weight:70, mobility:'immobile',
+    desc:'30° lateral tilt — the guideline-recommended alternative to 90° side-lying. Compare trochanter pressure vs. a full 90° turn.' },
+  { id:'lateral-90', name:'Lateral 90° (avoid)', pose:'lateral90', weight:70, mobility:'immobile',
+    desc:'Full 90° side-lying concentrates load on the greater trochanter and shoulder. Validate why 30° tilt is preferred.' },
+  { id:'fowler-45', name:'Semi-Fowler 45°', pose:'fowler45', weight:70, mobility:'assisted',
+    desc:'Head elevated 45° increases sacral shear and pressure. Demonstrate the shear/shear-reduction tradeoff.' },
+  { id:'bariatric', name:'Bariatric (150 kg)', pose:'supine', weight:150, mobility:'immobile',
+    desc:'High body mass raises peak pressure across all contact zones. Choose a support surface and repositioning plan.' },
+  { id:'cachectic', name:'Cachectic (45 kg)', pose:'supine', weight:45, mobility:'immobile',
+    desc:'Low body mass but prominent bony prominences → concentrated hotspots at sacrum, scapulae and heels.' },
+  { id:'prone', name:'Prone (ventilation)', pose:'prone', weight:70, mobility:'immobile',
+    desc:'Prone positioning for ARDS ventilation shifts hotspots to face, iliac crests, knees and toes.' },
+];
+
+let state = { scenario:'supine-baseline', pose:'supine', weight:70, mobility:'assisted', surface:'standard', turn:0, elevation:0, side:'right', heelOffload:false, turnSeconds:0, sessionStarted:false };
+
+function familyEngagement(family, turnDeg) {
+  const t = Math.min(turnDeg, 90) / 90;
+  if (family === 'supine') return Math.cos(t * Math.PI / 2);
+  if (family === 'lateral') return Math.sin(t * Math.PI / 2);
+  return 0;
+}
+function poseFamily(pose) {
+  if (pose === 'prone') return 'prone';
+  if (pose === 'lateral30' || pose === 'lateral90') return 'lateral';
+  return 'supine';
+}
+
+function computeGrid() {
+  const g = new Float32Array(GRID.nx * GRID.nz);
+  const wf = state.weight / 70;
+  const sf = SURFACE_FACTORS[state.surface] ?? 1;
+  const elevRad = state.elevation * Math.PI / 180;
+  const elevSacral = 1 + 0.45 * Math.sin(elevRad);
+  const elevHeel = Math.max(0.35, 1 - 0.35 * Math.sin(elevRad));
+  const fam = poseFamily(state.pose);
+  const turnForEngagement = state.pose === 'supine' ? state.turn : (state.pose === 'lateral30' ? 30 : 90);
+
+  for (const p of PROMINENCES) {
+    let engage;
+    if (fam === 'prone') { engage = p.family === 'prone' ? 1 : 0; }
+    else if (fam === 'lateral') {
+      // 30° tilt leaves part of the body weight on the back (residual supine
+      // contact) while full 90° side-lying concentrates all load on the down side.
+      const latW = state.pose === 'lateral30' ? 0.62 : 1.0;
+      const supW = state.pose === 'lateral30' ? 0.38 : 0.0;
+      engage = p.family === 'lateral' ? latW : (p.family === 'supine' ? supW : 0);
+    }
+    else { engage = familyEngagement(p.family, turnForEngagement); }
+    if (engage <= 0.001) continue;
+    let peak = p.base * wf * sf * engage;
+    if (p.id === 'sacrum') peak *= elevSacral;
+    if (p.id.indexOf('heel') === 0) peak *= elevHeel;
+    if (state.heelOffload && p.id.indexOf('heel') === 0) peak *= 0.15;
+
+    const gx = ((p.x + MATTRESS.length / 2) / MATTRESS.length) * GRID.nx;
+    const gz = ((p.z + MATTRESS.width / 2) / MATTRESS.width) * GRID.nz;
+    const sigmaCells = p.sigma / (MATTRESS.length / GRID.nx);
+    const r = Math.ceil(sigmaCells * 3);
+    const x0 = Math.max(0, Math.floor(gx - r)), x1 = Math.min(GRID.nx - 1, Math.ceil(gx + r));
+    const z0 = Math.max(0, Math.floor(gz - r)), z1 = Math.min(GRID.nz - 1, Math.ceil(gz + r));
+    for (let i = x0; i <= x1; i++) {
+      for (let j = z0; j <= z1; j++) {
+        const dx = i - gx, dz = j - gz;
+        const d2 = (dx * dx + dz * dz) / (sigmaCells * sigmaCells);
+        g[i + j * GRID.nx] += peak * Math.exp(-d2);
+      }
+    }
+  }
+  return g;
+}
+
+function deriveMetrics(grid) {
+  let peak = 0, peakIdx = 0, area = 0;
+  const thresh = [];
+  for (let i = 0; i < grid.length; i++) {
+    if (grid[i] > peak) { peak = grid[i]; peakIdx = i; }
+    if (grid[i] > CAPILLARY) { area++; thresh.push(i); }
+  }
+  const areaCm2 = area * (MATTRESS.length / GRID.nx) * (MATTRESS.width / GRID.nz);
+  const mobF = { independent:0.5, assisted:1.0, immobile:1.6 }[state.mobility] ?? 1.0;
+  const score = Math.min(100, Math.round((peak / 90) * 40 + (areaCm2 / 2000) * 30 + mobF * 18 + (state.elevation > 30 ? 6 : 0)));
+  const sorted = thresh.slice().sort((a, b) => grid[b] - grid[a]).slice(0, 6);
+  const peaks = [];
+  for (const i of sorted) {
+    const x = i % GRID.nx, z = Math.floor(i / GRID.nx);
+    const px = (x / GRID.nx) * MATTRESS.length - MATTRESS.length / 2;
+    const pz = (z / GRID.nz) * MATTRESS.width - MATTRESS.width / 2;
+    peaks.push({ px, pz, v: grid[i] });
+  }
+  return { peak, peakIdx, areaCm2, score, peaks };
+}
+
+/* ===== 3-D visualisation ===== */
+let renderer, scene, camera, controls, mattressTop, patientGroup, torsoGroup, markers, heatCanvas, heatCtx, heatTexture;
+const renderFailed = () => { document.getElementById('fallback').style.display = 'flex'; };
+
+function colorFor(v) {
+  const t = Math.max(0, Math.min(1, (v - 5) / 85));
+  const stops = [[0.00,28,58,138],[0.25,46,134,222],[0.50,46,204,113],[0.75,245,185,59],[1.00,255,93,93]];
+  let a = stops[0], b = stops[stops.length - 1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (t >= stops[i][0] && t <= stops[i + 1][0]) { a = stops[i]; b = stops[i + 1]; break; }
+  }
+  const span = (b[0] - a[0]) || 1;
+  const k = (t - a[0]) / span;
+  const mix = (i) => Math.round(a[i + 1] + (b[i + 1] - a[i + 1]) * k);
+  return 'rgb(' + mix(0) + ',' + mix(1) + ',' + mix(2) + ')';
+}
+
+function drawHeatmap(grid) {
+  heatCtx.clearRect(0, 0, heatCanvas.width, heatCanvas.height);
+  const cw = heatCanvas.width / GRID.nx, ch = heatCanvas.height / GRID.nz;
+  for (let i = 0; i < GRID.nx; i++) {
+    for (let j = 0; j < GRID.nz; j++) {
+      const v = grid[i + j * GRID.nx];
+      heatCtx.fillStyle = v < 1 ? 'rgba(20,30,50,0.35)' : colorFor(v);
+      heatCtx.fillRect(i * cw, j * ch, cw + 0.5, ch + 0.5);
+    }
+  }
+  heatTexture.needsUpdate = true;
+}
+
+function buildScene() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0b101c);
+  scene.fog = new THREE.Fog(0x0b101c, 400, 900);
+  camera = new THREE.PerspectiveCamera(48, 1, 0.1, 2000);
+  camera.position.set(60, 150, 250);
+  camera.lookAt(0, 10, 0);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const vp = document.getElementById('viewport');
+  renderer.setSize(vp.clientWidth, vp.clientHeight);
+  vp.appendChild(renderer.domElement);
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 12, 0);
+  controls.enableDamping = true;
+  controls.minDistance = 80;
+  controls.maxDistance = 600;
+  controls.maxPolarAngle = Math.PI * 0.55;
+
+  scene.add(new THREE.HemisphereLight(0xdfe9ff, 0x20283a, 1.1));
+  const key = new THREE.DirectionalLight(0xffffff, 1.3); key.position.set(80, 160, 120); scene.add(key);
+  const fill = new THREE.DirectionalLight(0x9fc4ff, 0.5); fill.position.set(-60, 60, -80); scene.add(fill);
+
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.MeshStandardMaterial({ color: 0x141b2b, roughness: 0.95 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -14; scene.add(floor);
+
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(210, 10, 100), new THREE.MeshStandardMaterial({ color: 0x273349, roughness: 0.6, metalness: 0.35 }));
+  frame.position.y = -6; scene.add(frame);
+  for (const lx of [-95, 95]) for (const lz of [-42, 42]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.5, 26, 12), new THREE.MeshStandardMaterial({ color: 0x1c2436, roughness: 0.5, metalness: 0.4 }));
+    leg.position.set(lx, -19, lz); scene.add(leg);
+  }
+
+  const mat = new THREE.Mesh(new THREE.BoxGeometry(200, 16, 90), new THREE.MeshStandardMaterial({ color: 0x2b4a66, roughness: 0.9 }));
+  mat.position.y = 2; scene.add(mat);
+
+  heatCanvas = document.createElement('canvas');
+  heatCanvas.width = 192; heatCanvas.height = 72;
+  heatCtx = heatCanvas.getContext('2d');
+  heatTexture = new THREE.CanvasTexture(heatCanvas);
+  heatTexture.magFilter = THREE.LinearFilter;
+  mattressTop = new THREE.Mesh(new THREE.PlaneGeometry(200, 90), new THREE.MeshBasicMaterial({ map: heatTexture, transparent: true, opacity: 0.92 }));
+  mattressTop.rotation.x = -Math.PI / 2; mattressTop.position.y = 10.1; scene.add(mattressTop);
+
+  patientGroup = new THREE.Group();
+  torsoGroup = new THREE.Group();
+  patientGroup.add(torsoGroup);
+  scene.add(patientGroup);
+  buildBody();
+
+  markers = new THREE.Group();
+  scene.add(markers);
+
+  window.addEventListener('resize', () => {
+    camera.aspect = vp.clientWidth / vp.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(vp.clientWidth, vp.clientHeight);
+  });
+}
+
+function skin() { return new THREE.MeshStandardMaterial({ color: 0xd8a06a, roughness: 0.75 }); }
+function gown() { return new THREE.MeshStandardMaterial({ color: 0x5a8fc9, roughness: 0.85 }); }
+function blanket() { return new THREE.MeshStandardMaterial({ color: 0x3f5b7a, roughness: 0.9 }); }
+function addBox(parent, w, h, d, x, y, z, mat) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return m; }
+function addSphere(parent, r, x, y, z, mat) { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 18), mat); m.position.set(x, y, z); parent.add(m); return m; }
+
+function buildBody() {
+  const s = skin(), g = gown(), b = blanket();
+  addSphere(torsoGroup, 10, -80, 24, 0, s);
+  addBox(torsoGroup, 56, 14, 42, -42, 20, 0, g);
+  addBox(torsoGroup, 26, 12, 40, -2, 18, 0, g);
+  addBox(torsoGroup, 8, 8, 10, -52, 20, 26, g);
+  addBox(torsoGroup, 8, 8, 10, -52, 20, -26, g);
+  addBox(patientGroup, 34, 12, 22, 28, 12, 10, b);
+  addBox(patientGroup, 34, 12, 22, 28, 12, -10, b);
+  addBox(patientGroup, 30, 9, 18, 62, 8, 9, b);
+  addBox(patientGroup, 30, 9, 18, 62, 8, -9, b);
+  addBox(patientGroup, 14, 5, 10, 82, 4, 9, s);
+  addBox(patientGroup, 14, 5, 10, 82, 4, -9, s);
+}
+
+function updateBodyPose() {
+  const elev = state.elevation * Math.PI / 180;
+  torsoGroup.rotation.z = -elev;
+  torsoGroup.position.y = 0;
+  const turnRad = (state.pose === 'supine' ? state.turn : state.pose === 'lateral30' ? 30 : 90) * Math.PI / 180;
+  patientGroup.rotation.x = state.side === 'right' ? turnRad : -turnRad;
+}
+
+function updateMarkers(peaks) {
+  while (markers.children.length) markers.remove(markers.children[0]);
+  for (const p of peaks) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(4, 0.9, 8, 24), new THREE.MeshBasicMaterial({ color: 0xff5d5d }));
+    ring.rotation.x = -Math.PI / 2; ring.position.set(p.px, 11.5, p.pz); markers.add(ring);
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(2.4, 6 + p.v / 12, 12), new THREE.MeshBasicMaterial({ color: 0xffcf5d }));
+    spike.position.set(p.px, 13 + (6 + p.v / 12) / 2, p.pz); markers.add(spike);
+  }
+}
+
+/* ===== UI + LMS + protocol ===== */
+const $ = (id) => document.getElementById(id);
+
+function renderUI(grid, metrics) {
+  $('peak-val').innerHTML = metrics.peak.toFixed(0) + ' <small>mmHg</small>';
+  const riskCls = metrics.score < 35 ? 'risk-low' : metrics.score < 60 ? 'risk-mod' : 'risk-high';
+  $('risk-val').className = 'v ' + riskCls;
+  $('risk-val').textContent = metrics.score;
+  $('area-val').innerHTML = metrics.areaCm2.toFixed(0) + ' <small>cm²</small>';
+  const list = $('hotspot-list');
+  list.innerHTML = '';
+  if (!metrics.peaks.length) {
+    list.innerHTML = '<li style="color:var(--muted)">No capillary-threshold hotspots.</li>';
+  } else {
+    for (const p of metrics.peaks) {
+      const li = document.createElement('li');
+      const c = p.v >= 60 ? 'var(--danger)' : p.v >= 45 ? 'var(--warn)' : '#e8c76a';
+      const side = p.pz >= 0 ? 'R' : 'L';
+      li.innerHTML = '<span><span class="dot" style="background:' + c + '"></span>' + side + '·' + Math.round(p.px) + ' cm</span><strong>' + p.v.toFixed(0) + ' mmHg</strong>';
+      list.appendChild(li);
+    }
+  }
+  const secs = Math.max(0, 7200 - state.turnSeconds);
+  const mm = Math.floor(secs / 60), ss = secs % 60;
+  $('turn-timer').textContent = mm + 'h ' + String(ss).padStart(2, '0') + 'm';
+  $('turn-timer').style.color = state.turnSeconds >= 7200 ? 'var(--danger)' : '';
+  $('pose-badge').textContent = state.pose + (state.pose === 'supine' ? ' (' + state.turn + '° turn)' : '') + ' · ' + state.surface + ' · ' + state.weight + ' kg';
+}
+
+function renderProtocol(metrics) {
+  const items = [];
+  items.push({ ok: state.turnSeconds < 7200, text: 'Reposition within 2 hours (NPUAP/EPUAP Q2H).' });
+  items.push({ ok: state.heelOffload || metrics.peak < 60, text: 'Heels offloaded / below 60 mmHg.' });
+  items.push({ ok: state.pose !== 'lateral90', text: 'Avoid 90° side-lying; prefer 30° lateral tilt.' });
+  items.push({ ok: state.elevation <= 30, text: 'Head-of-bed ≤ 30° to limit sacral shear.' });
+  items.push({ ok: metrics.peak < 60, text: 'Peak interface pressure < 60 mmHg.' });
+  const ul = $('protocol-list');
+  ul.innerHTML = '';
+  for (const it of items) {
+    const li = document.createElement('li');
+    li.className = it.ok ? 'pass' : 'fail';
+    li.textContent = it.text;
+    ul.appendChild(li);
+  }
+}
+
+function xapiStatement(verb, object, result) {
+  const stmt = {
+    id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+    actor: { objectType: 'Agent', name: 'trainee@pressuremattress', mbox: 'mailto:trainee@pressuremattress.example' },
+    verb: { id: 'https://w3id.org/xapi/verbs/' + verb, display: { 'en-US': verb } },
+    object: { id: 'https://pressuremattress.example/digital-twin/' + object, definition: { name: { 'en-US': object } } },
+    result: result,
+    timestamp: new Date().toISOString(),
+  };
+  const line = JSON.stringify(stmt);
+  const log = $('lms-log');
+  log.textContent = (log.textContent === 'Awaiting LMS session…' ? '' : log.textContent) + line + '
+';
+  const endpoint = $('lrs-endpoint').value.trim();
+  if (endpoint) {
+    fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Experience-API-Version': '1.0.3' }, body: line })
+      .then(r => { log.textContent += '  ↳ LRS ' + r.status + '
+'; })
+      .catch(e => { log.textContent += '  ↳ LRS error: ' + e + '
+'; });
+  }
+  return stmt;
+}
+
+window.API_1484_11 = {
+  initialized: false, data: {},
+  LMSInitialize: function () { this.initialized = true; return 'true'; },
+  LMSFinish: function () { this.initialized = false; return 'true'; },
+  LMSGetValue: function (k) { return this.data[k] ?? ''; },
+  LMSSetValue: function (k, v) { this.data[k] = v; return 'true'; },
+  LMSCommit: function () { return 'true'; },
+  LMSGetLastError: function () { return '0'; },
+  LMSGetErrorString: function () { return 'No error'; },
+  LMSGetDiagnostic: function () { return ''; },
+};
+window.API = window.API_1484_11;
+
+function applyScenario(id) {
+  const sc = SCENARIOS.find(s => s.id === id) || SCENARIOS[0];
+  state.scenario = id; state.pose = sc.pose; state.weight = sc.weight; state.mobility = sc.mobility;
+  state.turn = sc.pose === 'supine' ? 0 : sc.pose === 'lateral30' ? 30 : 90;
+  state.elevation = sc.pose === 'fowler45' ? 45 : 0;
+  state.heelOffload = false; state.side = 'right';
+  syncControls();
+  $('scenario-desc').textContent = sc.desc;
+  refresh();
+}
+
+function syncControls() {
+  $('scenario').value = state.scenario;
+  $('weight').value = state.weight; $('weight-val').textContent = state.weight + ' kg';
+  $('mobility').value = state.mobility;
+  $('surface').value = state.surface;
+  $('turn').value = state.turn; $('turn-val').textContent = state.turn + '°';
+  $('elevation').value = state.elevation; $('elevation-val').textContent = state.elevation + '°';
+}
+
+function refresh() {
+  const grid = computeGrid();
+  const metrics = deriveMetrics(grid);
+  if (heatTexture) drawHeatmap(grid);
+  if (patientGroup) updateBodyPose();
+  if (markers) updateMarkers(metrics.peaks);
+  renderUI(grid, metrics);
+  renderProtocol(metrics);
+}
+
+function wireUI() {
+  const sel = $('scenario');
+  sel.innerHTML = '';
+  for (const s of SCENARIOS) {
+    const o = document.createElement('option');
+    o.value = s.id; o.textContent = s.name; sel.appendChild(o);
+  }
+  sel.addEventListener('change', e => applyScenario(e.target.value));
+
+  const presets = [['Supine','supine-baseline'],['30° tilt','lateral-30'],['90° (avoid)','lateral-90'],['Fowler 45°','fowler-45'],['Bariatric','bariatric'],['Cachectic','cachectic'],['Prone','prone']];
+  const chipGrid = $('position-presets');
+  chipGrid.innerHTML = '';
+  for (const [label, id] of presets) {
+    const c = document.createElement('span');
+    c.className = 'chip'; c.textContent = label;
+    c.addEventListener('click', () => { applyScenario(id); renderPresetActive(); });
+    chipGrid.appendChild(c);
+  }
+
+  $('weight').addEventListener('input', e => { state.weight = +e.target.value; $('weight-val').textContent = state.weight + ' kg'; refresh(); });
+  $('mobility').addEventListener('change', e => { state.mobility = e.target.value; refresh(); });
+  $('surface').addEventListener('change', e => { state.surface = e.target.value; refresh(); });
+  $('turn').addEventListener('input', e => { state.turn = +e.target.value; state.pose = 'supine'; $('turn-val').textContent = state.turn + '°'; refresh(); });
+  $('elevation').addEventListener('input', e => { state.elevation = +e.target.value; $('elevation-val').textContent = state.elevation + '°'; refresh(); });
+  $('side-left').addEventListener('click', () => { state.side = 'left'; refresh(); });
+  $('side-right').addEventListener('click', () => { state.side = 'right'; refresh(); });
+  $('heels-offload').addEventListener('click', () => { state.heelOffload = !state.heelOffload; refresh(); });
+  $('reset-pose').addEventListener('click', () => { applyScenario(state.scenario); state.turnSeconds = 0; refresh(); });
+
+  $('lms-launch').addEventListener('click', () => {
+    state.sessionStarted = true;
+    window.API_1484_11.LMSInitialize();
+    $('lms-log').textContent = 'SCORM initialized. xAPI session open.
+';
+    xapiStatement('launched', 'digital-twin-simulator', { extensions: { 'https://pressuremattress.example/scenario': state.scenario } });
+  });
+  $('lms-complete').addEventListener('click', () => {
+    window.API_1484_11.LMSSetValue('cmi.core.lesson_status', 'completed');
+    xapiStatement('completed', 'patient-positioning-training', { success: true });
+    $('lms-log').textContent += '→ lesson_status=completed
+';
+  });
+  $('lms-score').addEventListener('click', () => {
+    const grid = computeGrid(); const m = deriveMetrics(grid);
+    const score = Math.max(0, 100 - m.score);
+    window.API_1484_11.LMSSetValue('cmi.core.score.raw', String(score));
+    xapiStatement('passed', 'patient-positioning-training', { score: { scaled: score / 100, raw: score, min: 0, max: 100 }, success: score >= 60 });
+    $('lms-log').textContent += '→ score.raw=' + score + '
+';
+  });
+}
+
+function renderPresetActive() {
+  const chips = document.querySelectorAll('#position-presets .chip');
+  chips.forEach(c => c.classList.remove('active'));
+  const map = { 'supine-baseline':'Supine','lateral-30':'30° tilt','lateral-90':'90° (avoid)','fowler-45':'Fowler 45°','bariatric':'Bariatric','cachectic':'Cachectic','prone':'Prone' };
+  chips.forEach(c => { if (c.textContent === map[state.scenario]) c.classList.add('active'); });
+}
+
+setInterval(() => {
+  state.turnSeconds += 5;
+  const grid = computeGrid(); const m = deriveMetrics(grid);
+  renderUI(grid, m);
+}, 5000);
+
+async function init() {
+  try { buildScene(); } catch (e) { renderFailed(); }
+  wireUI();
+  applyScenario('supine-baseline');
+  renderPresetActive();
+  function animate() {
+    requestAnimationFrame(animate);
+    if (renderer) { controls.update(); renderer.render(scene, camera); }
+  }
+  animate();
+}
+init();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "taskId": "bb7f9680-f41c-4498-b669-e2b659429957",
+  "productId": "64ec32da-63fa-48f3-bc34-27516c7ef264",
+  "createdAt": "2026-10-24T11:18:15.198Z",
+  "strategy": "worktree",
+  "branch": "autopilot/digital-twin-patient-positioning-simulator-for-tra",
+  "baseBranch": "main",
+  "baseCommit": "6028e65cd59a11ee2098a94aed110654625b92b2",
+  "status": "active",
+  "isolatedPort": 4210
+}
